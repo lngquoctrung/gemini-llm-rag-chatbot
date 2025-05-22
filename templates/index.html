@@ -3,50 +3,27 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giao diện Chat</title>
-    <link rel="stylesheet" href="../static/style.css">
+    <title>Chat with Assistant</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="chat-container">
         <header class="chat-header">
-            <h2>Chat với Hỗ trợ</h2>
+            <h2>Chat with Assistant</h2>
         </header>
         <div class="chat-box" id="chat-box">
-            <div class="message user">Xin chào!</div>
-            <div class="message bot">Chào bạn! Tôi có thể giúp gì?</div>
+            {% for sender, message in chat_history %}
+                <div class="message {{ sender }}">{{ message|safe }}</div>
+            {% endfor %}
         </div>
-        <form class="chat-input" onsubmit="sendMessage(event)">
-            <input type="text" id="message-input" placeholder="Nhập tin nhắn..." autocomplete="off" required>
-            <button type="submit">Gửi</button>
+        <form class="chat-input" id="chat-form">
+            <input type="text" id="message-input" name="message" placeholder="Enter message..." autocomplete="off" required>
+            <button type="submit" disabled>Send</button>
+        </form>
+        <form class="chat-reset" method="POST" action="{{ url_for('reset') }}">
+            <button type="submit">Clear all</button>
         </form>
     </div>
-
-    <script>
-        function sendMessage(event) {
-            event.preventDefault();
-            const input = document.getElementById('message-input');
-            const message = input.value.trim();
-            if (message !== '') {
-                const chatBox = document.getElementById('chat-box');
-                const userMsg = document.createElement('div');
-                userMsg.className = 'message user';
-                userMsg.textContent = message;
-                chatBox.appendChild(userMsg);
-                input.value = '';
-
-                // Scroll xuống cuối
-                chatBox.scrollTop = chatBox.scrollHeight;
-
-                // Giả lập phản hồi bot
-                setTimeout(() => {
-                    const botMsg = document.createElement('div');
-                    botMsg.className = 'message bot';
-                    botMsg.textContent = 'Bạn vừa nói: ' + message;
-                    chatBox.appendChild(botMsg);
-                    chatBox.scrollTop = chatBox.scrollHeight;
-                }, 800);
-            }
-        }
-    </script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
