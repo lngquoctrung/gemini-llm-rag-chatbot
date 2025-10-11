@@ -1,3 +1,6 @@
-.idea
-.env
+.idea/
+.venv/
+.git/
+assets/
 .gitignore
+.env

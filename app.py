@@ -1,9 +1,14 @@
-from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 import os
-import re
-import bleach
+import sys
 from dotenv import load_dotenv
+from flask import Flask, render_template, request, session, redirect, url_for, jsonify
+from pathlib import Path
 load_dotenv()
+
+root_dir = str(Path(__file__).parent.absolute())
+if not root_dir in sys.path:
+    sys.path.insert(0, root_dir)
+
 from src.gemini_rag_model import RAGChatbot
 from src.utils import convert_markdown_to_html
 
