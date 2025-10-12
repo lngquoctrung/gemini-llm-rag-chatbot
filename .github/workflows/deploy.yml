@@ -1,0 +1,85 @@
+name: Deploy RAG chatbot assistant with VPS
+
+on:
+    push:
+        branches:
+            - production
+
+env:
+    APP_PATH: ~/service/public/rag-chatbot-assistant
+
+jobs:
+    setup:
+        name: Create environment file on VPS
+        runs-on: ubuntu-latest
+        steps:
+            -
+                name: Create environment file
+                run: |
+                    echo "PORT=${{ secrets.APP_PORT }}" >> .env
+                    echo "GOOGLE_API_KEY=${{ secrets.GOOLE_API_KEY }}" >> .env
+                    echo "SESSION_SECRET_KEY=${{ secrets.APP_SESSION_SECRET_KEY }}" >> .env
+            -
+                name: Create project folder on VPS
+                uses: appleboy/ssh-action@master
+                with:
+                    host: ${{ secrets.VPS_HOST }}
+                    username: ${{ secrets.VPS_USERNAME }}
+                    key: ${{ secrets.VPS_KEY }}
+                    script: |
+                        mkdir -p $APP_PATH     
+            -
+                name: Copy .env file to VPS
+                uses: appleboy/scp-action@master
+                with:
+                    host: ${{ secrets.VPS_HOST }}
+                    username: ${{ secrets.VPS_USERNAME }}
+                    key: ${{ secrets.VPS_KEY }}
+                    source: ".env"
+                    target: "$APP_PATH"
+
+    build:
+        name: Build image and push to Docker Hub
+        needs: setup
+        runs-on: ubuntu-latest
+        steps:
+            - 
+                name: Checkout code
+                uses: actions/checkout@v3
+            -
+                name: Login to Docker Hub
+                uses: docker/login-action@v3
+                with:
+                    username: ${{ secrets.DOCKER_USERNAME }}
+                    password: ${{ secrets.DOCKER_PASSWORD }}
+            -
+                name: Setup QEMU
+                uses: docker/setup-qemu-action@v3
+
+            -
+                name: Setup Docker Buildx
+                uses: docker/setup-buildx-action@v3
+
+            -
+                name: Build and push image
+                uses: docker/build-push-action@v3
+                with:
+                    push: true
+                    tags: ${{ secrets.DOCKER_USERNAME }}/rag-chatbot-assistant:latest
+    
+    deploy:
+        name: Deploy to VPS
+        needs: build
+        runs-on: ubuntu-latest
+        steps:
+            -
+                name: Deploy to VPS
+                uses: appleboy/ssh-action@master
+                with:
+                    host: ${{ secrets.VPS_HOST }}
+                    username: ${{ secrets.VPS_USERNAME }}
+                    key: ${{ secrets.VPS_KEY }}
+                    script: |
+                        docker pull ${{ secrets.DOCKER_USERNAME }}/rag-chatbot-assistant:latest
+                        docker run -d --name rag-chatbot-assistant --env-file $APP_PATH/.env -p ${{ secrets.APP_PORT }}:${{ secrets.APP_PORT }} ${{ secrets.DOCKER_USERNAME }}/rag-chatbot-assistant:latest
+                        

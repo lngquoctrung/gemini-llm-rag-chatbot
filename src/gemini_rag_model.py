@@ -5,7 +5,7 @@ import io
 
 class RAGChatbot:
     def __init__(self, model="gemini-2.0-flash"):
-        self.client = genai.Client(api_key=os.getenv("GEMINI_API_KEY"))
+        self.client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
         self.model = model
         self.corpus = self.__load_corpus()
 

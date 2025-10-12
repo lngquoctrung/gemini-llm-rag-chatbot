@@ -58,4 +58,4 @@ def health_check():
     return "Server is UP", 200
 
 if __name__ == "__main__":
-    app.run(host=os.getenv("HOST"), port=os.getenv("PORT"), debug=True)
+    app.run(port=os.getenv("PORT"), debug=True)
