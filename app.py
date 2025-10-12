@@ -3,22 +3,20 @@ import sys
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, session, redirect, url_for, jsonify
 from pathlib import Path
+
 load_dotenv()
 
 root_dir = str(Path(__file__).parent.absolute())
-if not root_dir in sys.path:
+if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
 from src.gemini_rag_model import RAGChatbot
 from src.utils import convert_markdown_to_html
 
-# Initialize Flask web app
 app = Flask(__name__)
-# Use session to store history chat
 app.secret_key = os.getenv("SESSION_SECRET_KEY")
 
-# Initialize RAG chatbot
-rag_chatbot = RAGChatbot()
+chatbot = RAGChatbot()
 
 @app.route("/", methods=["GET"])
 def home():
@@ -32,17 +30,20 @@ def chat():
     if not user_message:
         return jsonify({"error": "Empty message"}), 400
 
-    # Store user message into history conversation
     session["chat_history"].append(("user", user_message))
     session.modified = True
 
-    # Call bot
-    bot_response = rag_chatbot.generate_content(prompt=user_message)
+    context = ""
+    if len(session["chat_history"]) > 1:
+        recent_messages = session["chat_history"][-6:-1]
+        context = "\n\nLịch sử hội thoại gần đây:\n"
+        for role, msg in recent_messages:
+            context += f"{'Khách hàng' if role == 'user' else 'Bot'}: {msg}\n"
 
-    # Handle response
+    prompt = context + "\n\nCâu hỏi hiện tại: " + user_message if context else user_message
+    bot_response = chatbot.generate_response(prompt)
     bot_response = convert_markdown_to_html(bot_response)
 
-    # Store bot's response
     session["chat_history"].append(("bot", bot_response))
     session.modified = True
 

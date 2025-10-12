@@ -3,25 +3,86 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chat with Assistant</title>
+    <title>TechShop Assistant</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
     <div class="chat-container">
         <header class="chat-header">
-            <h2>Chat with Assistant</h2>
+            <div class="header-content">
+                <div class="bot-avatar">
+                    <i class="fas fa-robot"></i>
+                </div>
+                <div class="header-info">
+                    <h2>TechShop Assistant</h2>
+                    <span class="status">
+                        <span class="status-dot"></span>
+                        Trực tuyến
+                    </span>
+                </div>
+            </div>
         </header>
+        
         <div class="chat-box" id="chat-box">
+            {% if chat_history|length == 0 %}
+            <div class="welcome-message">
+                <div class="welcome-icon">
+                    <i class="fas fa-comments"></i>
+                </div>
+                <h3>Chào mừng đến với TechShop Assistant!</h3>
+                <p>Tôi có thể giúp gì cho bạn hôm nay?</p>
+                <div class="quick-replies">
+                    <button class="quick-reply-btn" data-message="Làm thế nào để đặt hàng?">
+                        <i class="fas fa-shopping-cart"></i>
+                        Cách đặt hàng
+                    </button>
+                    <button class="quick-reply-btn" data-message="Chính sách đổi trả?">
+                        <i class="fas fa-undo"></i>
+                        Đổi trả hàng
+                    </button>
+                    <button class="quick-reply-btn" data-message="Thời gian giao hàng?">
+                        <i class="fas fa-truck"></i>
+                        Giao hàng
+                    </button>
+                </div>
+            </div>
+            {% endif %}
+            
             {% for sender, message in chat_history %}
-                <div class="message {{ sender }}">{{ message|safe }}</div>
+                <div class="message-wrapper {{ sender }}">
+                    <div class="message-avatar">
+                        {% if sender == 'user' %}
+                        <i class="fas fa-user"></i>
+                        {% else %}
+                        <i class="fas fa-robot"></i>
+                        {% endif %}
+                    </div>
+                    <div class="message {{ sender }}">
+                        <div class="message-content">{{ message|safe }}</div>
+                        <div class="message-time">Vừa xong</div>
+                    </div>
+                </div>
             {% endfor %}
         </div>
+        
         <form class="chat-input" id="chat-form">
-            <input type="text" id="message-input" name="message" placeholder="Enter message..." autocomplete="off" required>
-            <button type="submit" disabled>Send</button>
+            <input type="text" 
+                   id="message-input" 
+                   name="message" 
+                   placeholder="Nhập tin nhắn của bạn..." 
+                   autocomplete="off" 
+                   required>
+            <button type="submit" id="send-btn" disabled>
+                <i class="fas fa-paper-plane"></i>
+            </button>
         </form>
+        
         <form class="chat-reset" method="POST" action="{{ url_for('reset') }}">
-            <button type="submit">Clear all</button>
+            <button type="submit">
+                <i class="fas fa-trash"></i>
+                Xóa lịch sử chat
+            </button>
         </form>
     </div>
     <script src="{{ url_for('static', filename='script.js') }}"></script>

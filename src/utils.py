@@ -2,63 +2,103 @@ import bleach
 import re
 
 def convert_markdown_to_html(markdown):
-    # Step 1: Replace **text** with <b>text</b>
-    markdown = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', markdown)
+    allowed_tags = ['b', 'strong', 'i', 'em', 'u', 'p', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'code', 'pre', 'span', 'div']
+    allowed_attrs = {'*': ['class']}
 
-    # Step 2: Convert * and numbered lists to <ul>/<ol>
-    lines = markdown.split('\n')
-    new_lines = []
-    in_ul = False
-    in_ol = False
+    html = bleach.clean(markdown, tags=[], strip=True)
 
-    for line in lines:
+    def replace_code_block(match):
+        code_content = match.group(1).strip()
+        return f'<pre><code>{code_content}</code></pre>'
+
+    html = re.sub(r'``````', replace_code_block, html)
+    html = re.sub(r'`([^`]+)`', r'<code>\1</code>', html)
+    html = re.sub(r'^#### (.*?)$', r'<h4>\1</h4>', html, flags=re.MULTILINE)
+    html = re.sub(r'^### (.*?)$', r'<h3>\1</h3>', html, flags=re.MULTILINE)
+    html = re.sub(r'^## (.*?)$', r'<h2>\1</h2>', html, flags=re.MULTILINE)
+    html = re.sub(r'^# (.*?)$', r'<h1>\1</h1>', html, flags=re.MULTILINE)
+    html = re.sub(r'\*\*\*(.*?)\*\*\*', r'<b><i>\1</i></b>', html)
+    html = re.sub(r'\*\*(.*?)\*\*', r'<b>\1</b>', html)
+    html = re.sub(r'\*(.*?)\*', r'<i>\1</i>', html)
+
+    processed_lines = []
+    in_ordered_list = False
+    in_unordered_list = False
+    prev_was_list_item = False
+
+    for line in html.split('\n'):
         stripped = line.strip()
 
-        # Check for unordered list (*)
-        if stripped.startswith('*'):
-            if in_ol:
-                new_lines.append('</ol>')
-                in_ol = False
-            if not in_ul:
-                new_lines.append('<ul>')
-                in_ul = True
-            item = stripped[1:].strip()
-            new_lines.append(f'<li>{item}</li>')
+        if not stripped or stripped.startswith('<h') or stripped.startswith('<pre>') or stripped.startswith('</pre>') or stripped.startswith('<code>'):
+            if in_unordered_list and not prev_was_list_item:
+                processed_lines.append('</ul>')
+                in_unordered_list = False
+            if in_ordered_list and not prev_was_list_item:
+                processed_lines.append('</ol>')
+                in_ordered_list = False
+            processed_lines.append(line)
+            prev_was_list_item = False
+            continue
 
-        # Check for ordered list (1., 2., ...)
-        elif re.match(r'^\d+\.', stripped):
-            if in_ul:
-                new_lines.append('</ul>')
-                in_ul = False
-            if not in_ol:
-                new_lines.append('<ol>')
-                in_ol = True
-            item = re.sub(r'^\d+\.\s*', '', stripped)
-            new_lines.append(f'<li>{item}</li>')
+        ordered_match = re.match(r'^\d+[.)\s]\s*(.+)$', stripped)
+        unordered_match = re.match(r'^[*\-]\s+(.+)$', stripped)
 
-        # Normal line
+        if ordered_match:
+            if not in_ordered_list:
+                if in_unordered_list:
+                    processed_lines.append('</ul>')
+                    in_unordered_list = False
+                processed_lines.append('<ol>')
+                in_ordered_list = True
+            processed_lines.append(f'<li>{ordered_match.group(1)}</li>')
+            prev_was_list_item = True
+        elif unordered_match:
+            if not in_unordered_list:
+                if in_ordered_list and not prev_was_list_item:
+                    processed_lines.append('</ol>')
+                    in_ordered_list = False
+                processed_lines.append('<ul>')
+                in_unordered_list = True
+            processed_lines.append(f'<li>{unordered_match.group(1)}</li>')
+            prev_was_list_item = True
         else:
-            if in_ul:
-                new_lines.append('</ul>')
-                in_ul = False
-            if in_ol:
-                new_lines.append('</ol>')
-                in_ol = False
-            new_lines.append(line)
+            if in_unordered_list:
+                processed_lines.append('</ul>')
+                in_unordered_list = False
+            if in_ordered_list:
+                processed_lines.append('</ol>')
+                in_ordered_list = False
+            processed_lines.append(line)
+            prev_was_list_item = False
 
-    # Close any open lists
-    if in_ul:
-        new_lines.append('</ul>')
-    if in_ol:
-        new_lines.append('</ol>')
+    if in_unordered_list:
+        processed_lines.append('</ul>')
+    if in_ordered_list:
+        processed_lines.append('</ol>')
 
-    # Step 3: Clean with bleach
-    final_text = '\n'.join(new_lines)
-    final_text = bleach.clean(
-        final_text,
-        tags=['b', 'ul', 'ol', 'li'],
-        attributes={},
-        strip=True
-    )
+    html = '\n'.join(processed_lines)
 
-    return final_text
+    blocks = []
+    current_block = []
+
+    for line in html.split('\n'):
+        stripped = line.strip()
+        if re.match(r'^</?(?:ol|ul|h[1-4]|pre)', stripped):
+            if current_block:
+                block_text = ' '.join(current_block)
+                if block_text and not re.match(r'^<[^>]+>$', block_text):
+                    blocks.append(f'<p>{block_text}</p>')
+                current_block = []
+            blocks.append(line)
+        elif stripped:
+            current_block.append(stripped)
+
+    if current_block:
+        block_text = ' '.join(current_block)
+        if block_text and not re.match(r'^<[^>]+>$', block_text):
+            blocks.append(f'<p>{block_text}</p>')
+
+    html = ''.join(blocks)
+    html = bleach.clean(html, tags=allowed_tags, attributes=allowed_attrs, strip=False)
+
+    return html
