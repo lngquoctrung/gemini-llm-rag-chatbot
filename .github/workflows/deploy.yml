@@ -69,5 +69,5 @@ jobs:
                             -e SESSION_SECRET_KEY=${{ secrets.APP_SESSION_SECRET_KEY }} \
                             -p ${{ secrets.APP_PORT }}:${{ secrets.APP_PORT }} \
                             --restart unless-stopped \
-                            your-dockerhub-username/rag-chatbot-assistant-app:latest
+                            ${{ secrets.DOCKERHUB_USERNAME }}/rag-chatbot-assistant-app:latest
                         
