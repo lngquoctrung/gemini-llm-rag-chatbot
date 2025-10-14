@@ -67,7 +67,7 @@ jobs:
                             -e PORT=${{ secrets.APP_PORT }} \
                             -e GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} \
                             -e SESSION_SECRET_KEY=${{ secrets.APP_SESSION_SECRET_KEY }} \
-                            -p ${{ secrets.APP_PORT }}:${{ secrets.APP_PORT }} \
+                            -p 127.0.0.1:${{ secrets.APP_PORT }}:${{ secrets.APP_PORT }} \
                             --restart unless-stopped \
                             ${{ secrets.DOCKERHUB_USERNAME }}/rag-chatbot-assistant-app:latest
                         
