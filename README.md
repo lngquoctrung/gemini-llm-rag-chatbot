@@ -36,18 +36,19 @@ You don’t need to install any dependencies — just Docker. Run this command:
 ```bash
 docker run -d \
   --name chatbot \
-  -p 3000:3000 \
-  -e GEMINI_API_KEY=<your_gemini_api_key> \
-  -e SESSION_SECRET_KEY=<your_session_secret_key> \
-  qctrung/gemini-ragchatbot-assistant
+  -p <your_port>:<your_port> \
+  -e PORT=<your_port> \
+  -e GOOGLE_API_KEY=<your_gemini_api_key> \
+  -e APP_SESSION_SECRET_KEY=<your_session_secret_key> \
+  qctrung/rag-chatbot-assistant-app:latest
 ````
 
 Replace:
 
-* `<your_gemini_api_key>` with the API key you got from Google.
-* `<your_session_secret_key>` with a custom string to secure Flask session (e.g., `"supersecret123"`).
+- `<your_gemini_api_key>` with the API key you got from Google.
+- `<your_session_secret_key>` with a custom string to secure Flask session (e.g., `"supersecret123"`).
 
-Once running, open your browser and go to: [http://localhost:3000](http://localhost:3000)
+Once running, open your browser and go to: `http://localhost:<your_port>`
 
 ---
 
@@ -55,28 +56,29 @@ Once running, open your browser and go to: [http://localhost:3000](http://localh
 
 Built using pure HTML and CSS — no build step needed. Highlights:
 
-* Clean and responsive chat UI
-* Auto-scrolls to the latest message
-* Bold text and list rendering supported
-* Scrollable chat container (instead of scrolling the entire page)
-* Chat history stored in Flask session memory
+- Clean and responsive chat UI
+- Auto-scrolls to the latest message
+- Bold text and list rendering supported
+- Scrollable chat container (instead of scrolling the entire page)
+- Chat history stored in Flask session memory
 
 ### Demo
 
-![](./assets/demo1.png)
+![User interface](./assets/user_interface.png)
 
-![](./assets/demo2.png)
+![Bot is answering](./assets/bot_answering.png)
 
-![](./assets/demo3.png)
+![First answer](./assets/first_answer.png)
 
-![](./assets/demo4.png)
+![Bot is answering the second question](./assets/bot_answer_second_question.png)
+
+![Second answer](./assets/second_answer.png)
 
 ---
 
 ## Project Structure
 
-```
-.
+```bash
 ├── ./app.py
 ├── ./corpus
 │   ├── ./corpus/techshop-faq.pdf
@@ -117,12 +119,15 @@ Every time the user sends a message:
 1. The `prompt` is combined with the previously uploaded documents (`self.corpus`) as input to the Gemini model.
 2. The model (`gemini-2.0-flash`, by default) is queried with:
 
-```python
-contents = [
-    *self.corpus,
-    prompt
-]
-```
+    ```python
+    contents=[*self.corpus, formatted_prompt],
+    config={
+        "system_instruction": system_instruction,
+        "temperature": 0.2,
+        "top_p": 0.8,
+        "top_k": 20
+    }
+    ```
 
 3. Gemini generates a response grounded in the uploaded documents.
 4. The raw response is then passed through formatting & sanitization steps before being displayed to the user.
@@ -135,11 +140,11 @@ contents = [
 
 Make sure your PDFs are placed inside a `corpus/` directory at the root of the project:
 
-```
+```bash
 corpus/
-├── intro.pdf
-├── faq.pdf
-└── user-guide.pdf
+├── techshop-faq.pdf
+├── techshop-troubleshooting-guide.pdf
+└── techshop-user-guide.pdf
 ```
 
 You can customize this list as needed. The model supports any number of files as long as it fits Gemini’s API input constraints.
@@ -148,13 +153,13 @@ You can customize this list as needed. The model supports any number of files as
 
 ## Security Notes
 
-* Never commit your `.env` or real API keys to a public repository.
-* API keys and secret keys should be passed via environment variables (as shown in the Docker command).
-* All chatbot responses are sanitized with `bleach` to prevent script injection (XSS).
+= Never commit your `.env` or real API keys to a public repository.
+= API keys and secret keys should be passed via environment variables (as shown in the Docker command).
+= All chatbot responses are sanitized with `bleach` to prevent script injection (XSS).
 
 ---
 
-## Thanks for using this project!
+## Thanks for using this project
 
 Developed by [@lngquoctrung](https://github.com/lngquoctrung).
 Feel free to open an issue, contribute, or ask questions!

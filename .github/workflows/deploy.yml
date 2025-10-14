@@ -17,8 +17,8 @@ jobs:
                 name: Login to Docker Hub
                 uses: docker/login-action@v3
                 with:
-                    username: ${{ secrets.DOCKER_USERNAME }}
-                    password: ${{ secrets.DOCKER_PASSWORD }}
+                    username: ${{ secrets.DOCKERHUB_USERNAME }}
+                    password: ${{ secrets.DOCKERHUB_PASSWORD }}
             -
                 name: Setup QEMU
                 uses: docker/setup-qemu-action@v3
@@ -32,7 +32,7 @@ jobs:
                 uses: docker/build-push-action@v3
                 with:
                     push: true
-                    tags: ${{ secrets.DOCKER_USERNAME }}/rag-chatbot-assistant:latest
+                    tags: ${{ secrets.DOCKERHUB_USERNAME }}/rag-chatbot-assistant-app:latest
     
     deploy:
         name: Deploy to VPS
@@ -48,26 +48,29 @@ jobs:
                     key: ${{ secrets.VPS_KEY }}
                     script: |
                         # Create project folder
-                        mkdir -p "$HOME/service/public/rag-chatbot-assistant"
-                        cd "$HOME/service/public/rag-chatbot-assistant"
+                        mkdir -p "${{ secrets.PROJECT_PATH }}"
+                        cd "${{ secrets.PROJECT_PATH }}"
                         
                         # Create .env file
                         echo "PORT=${{ secrets.APP_PORT }}" >> .env
                         echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
                         echo "SESSION_SECRET_KEY=${{ secrets.APP_SESSION_SECRET_KEY }}" >> .env
 
-                        # Pull and run image
-                        docker pull ${{ secrets.DOCKER_USERNAME }}/rag-chatbot-assistant:latest
-
                         # Remove old container
-                        docker stop rag-chatbot-assistant 2>/dev/null || true
-                        docker rm rag-chatbot-assistant 2>/dev/null || true
+                        docker stop rag-chatbot-assistant-app 2>/dev/null || true
+                        docker rm rag-chatbot-assistant-app 2>/dev/null || true
+
+                        # Remove old image and pull and run new image
+                        docker rmi ${{ secrets.DOCKERHUB_USERNAME }}/rag-chatbot-assistant-app:latest
+                        docker pull ${{ secrets.DOCKERHUB_USERNAME }}/rag-chatbot-assistant-app:latest
+
 
                         # Run new container
                         docker run \
                             -d \
-                            --name rag-chatbot-assistant \
+                            --name rag-chatbot-assistant-app \
                             --env-file .env \
                             -p ${{ secrets.APP_PORT }}:${{ secrets.APP_PORT }} \
-                            ${{ secrets.DOCKER_USERNAME }}/rag-chatbot-assistant:latest
+                            --restart unless-stopped \
+                            ${{ secrets.DOCKERHUB_USERNAME }}/rag-chatbot-assistant-app:latest
                         
