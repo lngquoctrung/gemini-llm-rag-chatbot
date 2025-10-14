@@ -50,11 +50,6 @@ jobs:
                         # Create project folder
                         mkdir -p "${{ secrets.PROJECT_PATH }}"
                         cd "${{ secrets.PROJECT_PATH }}"
-                        
-                        # Create .env file
-                        echo "PORT=${{ secrets.APP_PORT }}" >> .env
-                        echo "GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }}" >> .env
-                        echo "SESSION_SECRET_KEY=${{ secrets.APP_SESSION_SECRET_KEY }}" >> .env
 
                         # Remove old container
                         docker stop rag-chatbot-assistant-app 2>/dev/null || true
@@ -69,8 +64,10 @@ jobs:
                         docker run \
                             -d \
                             --name rag-chatbot-assistant-app \
-                            --env-file .env \
+                            -e PORT=${{ secrets.APP_PORT }} \
+                            -e GOOGLE_API_KEY=${{ secrets.GOOGLE_API_KEY }} \
+                            -e SESSION_SECRET_KEY=${{ secrets.APP_SESSION_SECRET_KEY }} \
                             -p ${{ secrets.APP_PORT }}:${{ secrets.APP_PORT }} \
                             --restart unless-stopped \
-                            ${{ secrets.DOCKERHUB_USERNAME }}/rag-chatbot-assistant-app:latest
+                            your-dockerhub-username/rag-chatbot-assistant-app:latest
                         
