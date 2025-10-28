@@ -1,7 +1,12 @@
 bleach==6.2.0
+PyMuPDF==1.26.5
 Flask==3.1.2
+flask_limiter==4.0.0
+langchain_text_splitters==1.0.0
 protobuf==6.32.1
 python-dotenv==1.1.1
+qdrant_client==1.15.1
+gunicorn==23.0.0
 google-auth==2.40.2
 google-genai==1.16.1
-gunicorn==23.0.0
+redis==7.0.1

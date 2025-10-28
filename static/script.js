@@ -163,10 +163,10 @@ chatForm.addEventListener("submit", async (e) => {
         const data = await response.json();
         removeTempMessages();
 
-        if (data.bot_response) {
-            addMessage("bot", data.bot_response);
+        if (data.response) {
+            addMessage('bot', data.response);
         } else {
-            addMessage("bot", "Xin lỗi, tôi không thể tạo phản hồi lúc này.");
+            addMessage('bot', 'Xin lỗi, tôi không thể tạo phản hồi lúc này.');
         }
 
     } catch (err) {

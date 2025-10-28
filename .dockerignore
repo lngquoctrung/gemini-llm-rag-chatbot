@@ -1,6 +1,13 @@
 .idea/
 .venv/
 .git/
+.github/
 assets/
+qdrant-storage/
+redis-data/
+**/__pycache__
+
 .gitignore
 .env
+README.md
+requirements.dev.txt

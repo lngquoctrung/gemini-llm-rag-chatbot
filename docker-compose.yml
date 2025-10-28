@@ -1,0 +1,73 @@
+services:
+    rag-chat-app:
+        build:
+            context: .
+            dockerfile: Dockerfile
+        container_name: rag-chat-app
+        image: rag-chat-app
+        depends_on:
+            - qdrant
+            - redis
+        networks:
+            - app-network
+        env_file:
+            - .env
+        ports:
+            - "${PORT}:${PORT}"
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:${PORT}/health"]
+            interval: 1m30s
+            timeout: 30s
+            start_interval: 1m
+            start_period: 10s
+            retries: 3
+
+    qdrant:
+        image: qdrant/qdrant:v1.15
+        container_name: rag-chat-app-qdrant
+        ports:
+            - "6333:6333"
+        networks:
+            - app-network
+        volumes:
+            - qdrant-storage:/qdrant/storage
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+            interval: 1m30s
+            timeout: 30s
+            start_interval: 1m
+            start_period: 10s
+            retries: 3
+
+    redis:
+        image: redis:alpine
+        container_name: rag-chat-app-redis
+        command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "allkeys-lru"]
+        ports:
+            - "6379:6379"
+        networks:
+            - app-network
+        volumes:
+            - redis-data:/data
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 1m30s
+            timeout: 30s
+            start_interval: 1m
+            start_period: 10s
+            retries: 3
+        
+
+networks:
+    app-network:
+        driver: bridge
+        name: rag-chat-app-network
+
+volumes:
+    redis-data:
+        name: rag-chat-app-redis-data
+    qdrant-storage:
+        name: rag-chat-app-qdrant-storage
