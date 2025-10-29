@@ -142,4 +142,4 @@ def stats():
         return jsonify({"error": str(e)}), 500
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=os.getenv("PORT"), debug=False)
+    app.run(host="0.0.0.0", port=os.getenv("APP_PORT"), debug=False)
