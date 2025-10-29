@@ -19,6 +19,10 @@ from src.config import Config
 app = Flask(__name__)
 app.secret_key = os.getenv("SESSION_SECRET_KEY")
 
+@app.template_filter('markdown_to_html')
+def markdown_to_html_filter(text):
+    return convert_markdown_to_html(text)
+
 limiter = Limiter(
     get_remote_address,
     app=app,

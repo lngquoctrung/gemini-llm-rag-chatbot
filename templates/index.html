@@ -50,19 +50,25 @@
             {% endif %}
             
             {% for sender, message in chat_history %}
-                <div class="message-wrapper {{ sender }}">
-                    <div class="message-avatar">
-                        {% if sender == 'user' %}
-                        <i class="fas fa-user"></i>
+            <div class="message-wrapper {{ sender }}">
+                <div class="message-avatar">
+                    {% if sender == 'user' %}
+                    <i class="fas fa-user"></i>
+                    {% else %}
+                    <i class="fas fa-robot"></i>
+                    {% endif %}
+                </div>
+                <div class="message {{ sender }}">
+                    <div class="message-content">
+                        {% if sender == 'assistant' %}
+                            {{ message|markdown_to_html|safe }}
                         {% else %}
-                        <i class="fas fa-robot"></i>
+                            {{ message|safe }}
                         {% endif %}
                     </div>
-                    <div class="message {{ sender }}">
-                        <div class="message-content">{{ message|safe }}</div>
-                        <div class="message-time">Vừa xong</div>
-                    </div>
+                    <div class="message-time">Vừa xong</div>
                 </div>
+            </div>
             {% endfor %}
         </div>
         
